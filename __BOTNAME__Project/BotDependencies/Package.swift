@@ -13,7 +13,7 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../../__BOTNAME__"),
-        .package(url: "https://github.com/dmoroz0v/TgBotSDK.git", from: "0.0.2"),
+        .package(url: "https://github.com/dmoroz0v/TgBotSDK.git", .exact("__TAG__")),
     ],
     targets: [
         .target(

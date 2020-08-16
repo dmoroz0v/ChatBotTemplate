@@ -1,4 +1,5 @@
 {
-	"name": "__BOTNAME__"
+	"name": "__BOTNAME__",
+	"version": "__TAG__"
 }
 
