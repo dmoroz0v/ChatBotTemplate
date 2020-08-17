@@ -12,7 +12,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/dmoroz0v/ChatBotSDK.git", from: "0.0.0")
+        .package(url: "https://github.com/dmoroz0v/ChatBotSDK.git", .exact("__sdkTAG__"))
     ],
     targets: [
         .target(
