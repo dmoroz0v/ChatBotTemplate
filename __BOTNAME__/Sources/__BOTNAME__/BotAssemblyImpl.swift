@@ -23,6 +23,18 @@ public final class BotAssemblyImpl: BotAssembly {
             flowAssembly: PickerOperationFlowAssembly()
         ),
 
+        CommandHandler(
+            command: Command(value: "/insert"),
+            description: "Insert value",
+            flowAssembly: DatabaseInsertOperationFlowAssembly()
+        ),
+
+        CommandHandler(
+            command: Command(value: "/select"),
+            description: "Select values",
+            flowAssembly: DatabaseSelectOperationFlowAssembly()
+        ),
+
     ]
 
     public init() {
