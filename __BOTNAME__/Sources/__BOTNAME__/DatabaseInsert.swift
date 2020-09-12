@@ -65,7 +65,7 @@ final class DatabaseInsertFlowInputHandler: FlowInputHandler {
 
     var context: DatabaseInsertContext?
 
-    func markup(userId: Int64) -> FlowInputHandlerMarkup {
+    func start(userId: Int64) -> FlowInputHandlerMarkup {
         return FlowInputHandlerMarkup(texts: ["Type text"])
     }
 

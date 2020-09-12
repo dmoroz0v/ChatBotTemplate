@@ -24,7 +24,7 @@ final class DatabaseSelectOperationAction: FlowAction {
     func execute(userId: Int64) -> [String] {
         do {
             let database = try Database()
-            return try database.fetch(userId: userId)
+            return [try database.fetch(userId: userId).joined(separator: "\n")]
         } catch let e {
             return [e.localizedDescription]
         }

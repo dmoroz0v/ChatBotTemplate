@@ -11,11 +11,9 @@ final class PickerOperationFlowAssembly: FlowAssembly {
     init() {
         let pickerContext = PickerContext()
 
-        let handler = PickerFlowInputHandler()
-        handler.context = pickerContext
+        let handler = PickerFlowInputHandler(context: pickerContext)
 
-        let pickerAction = PickerOperationAction()
-        pickerAction.context = pickerContext
+        let pickerAction = PickerOperationAction(context: pickerContext)
 
         initialHandlerId = "pick"
         inputHandlers = ["pick" : handler]
@@ -27,29 +25,30 @@ final class PickerOperationFlowAssembly: FlowAssembly {
 
 final class PickerContext: Storable {
 
-    var page: Int = 1
     var text: String?
 
     func store() -> StorableContainer {
         let container =  StorableContainer()
         container.setString(value: text, key: "text")
-        container.setInt(value: page, key: "page")
         return container
     }
 
     func restore(container: StorableContainer) {
         text = container.stringValue(key: "text")
-        page = container.intValue(key: "page") ?? 1
     }
 
 }
 
 final class PickerOperationAction: FlowAction {
 
-    var context: PickerContext?
+    let context: PickerContext
+
+    init(context: PickerContext) {
+        self.context = context
+    }
 
     func execute(userId: Int64) -> [String] {
-        if let text = context?.text {
+        if let text = context.text {
             return ["You picked '\(text)'"]
         } else {
             return ["error"]
@@ -60,88 +59,109 @@ final class PickerOperationAction: FlowAction {
 
 final class PickerFlowInputHandler: FlowInputHandler {
 
-    var context: PickerContext?
+    private struct Data {
+        var page: Int
+        var items: [String]
+    }
 
-    let items = [
-        "item1",
-        "item2",
-        "item3",
-        "item4",
-        "item5",
-        "item6",
-        "item7",
-        "item8",
-    ]
+    let context: PickerContext
 
-    func markup(userId: Int64) -> FlowInputHandlerMarkup {
+    private var data: Data?
+
+    init(context: PickerContext) {
+        self.context = context
+    }
+
+    func start(userId: Int64) -> FlowInputHandlerMarkup {
+        let data = Data(
+            page: 1,
+            items: [
+                "item1", "item2", "item3", "item4",
+                "item5", "item6", "item7", "item8",
+            ]
+        )
         var keyboard: ReplyKeyboardMarkup?
-        if let context = context {
-            keyboard = ChatBotSDK.ReplyKeyboardMarkup(
-                keyboard: [
-                    [
-                        ChatBotSDK.KeyboardButton(text: items[(context.page - 1) * 4 + 0]),
-                        ChatBotSDK.KeyboardButton(text: items[(context.page - 1) * 4 + 1])
-                    ],
-                    [
-                        ChatBotSDK.KeyboardButton(text: items[(context.page - 1) * 4 + 2]),
-                        ChatBotSDK.KeyboardButton(text: items[(context.page - 1) * 4 + 3])
-                    ],
-                    [
-                        ChatBotSDK.KeyboardButton(text: "next")
-                    ],
+        keyboard = ChatBotSDK.ReplyKeyboardMarkup(
+            keyboard: [
+                [
+                    ChatBotSDK.KeyboardButton(text: data.items[(data.page - 1) * 4 + 0]),
+                    ChatBotSDK.KeyboardButton(text: data.items[(data.page - 1) * 4 + 1])
                 ],
-                resizeKeyboard: true,
-                oneTimeKeyboard: true
-            )
-        }
+                [
+                    ChatBotSDK.KeyboardButton(text: data.items[(data.page - 1) * 4 + 2]),
+                    ChatBotSDK.KeyboardButton(text: data.items[(data.page - 1) * 4 + 3])
+                ],
+                [
+                    ChatBotSDK.KeyboardButton(text: "next")
+                ],
+            ],
+            resizeKeyboard: true,
+            oneTimeKeyboard: true
+        )
+        self.data = data
         return FlowInputHandlerMarkup(texts: ["Pick item"], keyboard: keyboard, interrupt: false)
     }
 
     func handle(userId: Int64, text: String) -> FlowInputHandlerResult {
 
-        if let context = context {
+        guard var data = data else {
+            return .end
+        }
 
-            if text == "next" {
-                context.page += 1
-            } else if text == "prev" {
-                context.page -= 1
-            }
+        if text == "next" {
+            data.page += 1
+        } else if text == "prev" {
+            data.page -= 1
+        }
 
-            if text == "next" || text == "prev" {
-                let keyboard = ReplyKeyboardMarkup(
-                    keyboard: [
-                        [
-                            KeyboardButton(text: items[(context.page - 1) * 4 + 0]),
-                            KeyboardButton(text: items[(context.page - 1) * 4 + 1])
-                        ],
-                        [
-                            KeyboardButton(text: items[(context.page - 1) * 4 + 2]),
-                            KeyboardButton(text: items[(context.page - 1) * 4 + 3])
-                        ],
-                        [
-                            KeyboardButton(text: context.page == 2 ? "prev" : "next")
-                        ],
+        if text == "next" || text == "prev" {
+            let keyboard = ReplyKeyboardMarkup(
+                keyboard: [
+                    [
+                        KeyboardButton(text: data.items[(data.page - 1) * 4 + 0]),
+                        KeyboardButton(text: data.items[(data.page - 1) * 4 + 1])
                     ],
-                    resizeKeyboard: true,
-                    oneTimeKeyboard: true
-                )
+                    [
+                        KeyboardButton(text: data.items[(data.page - 1) * 4 + 2]),
+                        KeyboardButton(text: data.items[(data.page - 1) * 4 + 3])
+                    ],
+                    [
+                        KeyboardButton(text: data.page == 2 ? "prev" : "next")
+                    ],
+                ],
+                resizeKeyboard: true,
+                oneTimeKeyboard: true
+            )
 
-                let inputMarkup = FlowInputHandlerMarkup(
-                    texts: ["Pick item"],
-                    keyboard: keyboard,
-                    interrupt: false
-                )
+            let inputMarkup = FlowInputHandlerMarkup(
+                texts: ["Pick item"],
+                keyboard: keyboard,
+                interrupt: false
+            )
 
-                return .stay(markup: inputMarkup)
-            }
-
-            if !text.isEmpty {
-                context.text = text
-            }
-
+            return .stay(markup: inputMarkup)
+        } else if !text.isEmpty {
+            context.text = text
         }
 
         return .end
+    }
+
+    func store() -> StorableContainer {
+        let container = StorableContainer()
+        if let data = data {
+            container.setInt(value: data.page, key: "page")
+            container.setStrings(value: data.items, key: "items")
+        }
+        return container
+    }
+
+    func restore(container: StorableContainer) {
+        let page = container.intValue(key: "page")
+        let items = container.stringsValue(key: "items")
+        if let page = page, let items = items {
+            data = Data(page: page, items: items)
+        }
     }
 
 }

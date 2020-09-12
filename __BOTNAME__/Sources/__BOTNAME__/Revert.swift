@@ -59,7 +59,7 @@ final class RevertFlowInputHandler: FlowInputHandler {
 
     var context: RevertContext?
 
-    func markup(userId: Int64) -> FlowInputHandlerMarkup {
+    func start(userId: Int64) -> FlowInputHandlerMarkup {
         return FlowInputHandlerMarkup(texts: ["Type text"])
     }
 
